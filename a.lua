@@ -2,32 +2,65 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wizard"))()
 local lp = game.Players.LocalPlayer
 
+-- Sửa thông báo
+local function showNoti(title, text)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = 2
+    })
+end
+
 -- helper teleport
 local function tp(cf)
     if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
         lp.Character.HumanoidRootPart.CFrame = cf
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "Teleport",
-            Text = "Dịch chuyển đến part!",
-            Duration = 2
-        })
+        showNoti("Teleport", "Dịch chuyển đến part!")
     end
 end
 
--- helper invoke
-local function collect(args)
-    local remote = game:GetService("ReplicatedStorage")
-        :WaitForChild("Packages"):WaitForChild("Knit")
-        :WaitForChild("Services"):WaitForChild("CollectibleService")
-        :WaitForChild("RF"):WaitForChild("Collect")
-    pcall(function()
-        remote:InvokeServer(unpack(args))
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "Collect",
-            Text = "Đã invoke Collect!",
-            Duration = 2
-        })
-    end)
+-- helper invoke - SỬA LẠI CHO EXECUTOR
+local function collect(code)
+    if code and code ~= "" then
+        -- Thử nhiều cách để debug trong executor
+        rconsoleprint("=== EXECUTING CODE ===\n")
+        rconsoleprint(code .. "\n")
+        rconsoleprint("=== OUTPUT ===\n")
+        
+        -- Chạy code và bắt output
+        local func = loadstring(code)
+        if func then
+            -- Redirect print để hiển thị trong executor console
+            local oldprint = print
+            print = function(...)
+                local args = {...}
+                local output = ""
+                for i,v in ipairs(args) do
+                    output = output .. tostring(v) .. " "
+                end
+                rconsoleprint(output .. "\n")
+                oldprint(...) -- Vẫn giữ print gốc
+            end
+            
+            local success, err = pcall(func)
+            
+            -- Khôi phục print gốc
+            print = oldprint
+            
+            if success then
+                rconsoleprint("✓ Code executed successfully\n")
+                showNoti("Collect", "Đã chạy code!")
+            else
+                rconsoleprint("✗ Error: " .. tostring(err) .. "\n")
+                showNoti("Lỗi", "Lỗi: " .. tostring(err))
+            end
+        else
+            rconsoleprint("✗ Failed to load code\n")
+        end
+        rconsoleprint("====================\n")
+    else
+        rconsoleprint("No code provided\n")
+    end
 end
 
 -- positions (CFrame)
@@ -38,42 +71,38 @@ local positions = {
     CFrame.new(106.348709, 104.733131, 432.794159, 1, 0, 0, 0, 1, 0, 0, 0, 1)
 }
 
--- sample args (sửa tuỳ ý cho từng part)
-local argsList = {
-    {"uuid-1", "GalaxyStars", "uuid-2"},
-    {"uuid-3", "GalaxyStars", "uuid-4"},
-    {"uuid-5", "GalaxyStars", "uuid-6"},
-    {"uuid-7", "GalaxyStars", "uuid-8"},
-}
+-- store user inputs
+local codeStrings = {"", "", "", ""}
 
 -- UI
 local Window = Library:NewWindow("UGC Auto")
 local Tab = Window:NewSection("Main")
 
--- Lobby button
-Tab:CreateButton("Go To Lobby", function()
-    local remote = game:GetService("ReplicatedStorage")
-        :WaitForChild("Packages"):WaitForChild("Knit")
-        :WaitForChild("Services"):WaitForChild("GameService")
-        :WaitForChild("RF"):WaitForChild("GoToLobby")
-    pcall(function() 
-        remote:InvokeServer()
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "Lobby",
-            Text = "Đã về Lobby!",
-            Duration = 2
-        })
-    end)
-end)
+-- Ensure console exists
+if rconsolecreate then
+    rconsolecreate()
+    rconsoleprint("UGC Auto loaded\n")
+end
 
--- Part buttons
-for i=1,4 do
-    Tab:CreateButton("Go Part "..i, function()
-        tp(positions[i])
-        task.wait(0.3)
-        collect(argsList[i])
+-- Part textboxes and buttons (fixed)
+for i = 1, 4 do
+    local idx = i -- capture safe index
+
+    -- Use the two-argument signature: label + callback
+    Tab:CreateTextbox("Code for Part "..idx, function(value)
+        codeStrings[idx] = tostring(value or "")
+        rconsoleprint(("Updated Part %d code: %s\n"):format(idx, codeStrings[idx]))
+        showNoti("Textbox", ("Part %d code updated"):format(idx))
+    end)
+
+    Tab:CreateButton("Go Part "..idx, function()
+        rconsoleprint(("Go Part %d pressed. Current code: %s\n"):format(idx, tostring(codeStrings[idx])))
+        tp(positions[idx])
+        task.wait(0.5)
+        collect(codeStrings[idx])
     end)
 end
+
 
 -- Auto toggle
 local looping = false
@@ -83,12 +112,22 @@ Tab:CreateToggle("Auto Run Parts", function(state)
         task.spawn(function()
             while looping do
                 for i=1,4 do
+                    if not looping then break end
                     tp(positions[i])
-                    task.wait(0.3)
-                    collect(argsList[i])
-                    task.wait(1) -- delay giữa các part
+                    task.wait(0.5)
+                    collect(codeStrings[i])
+                    task.wait(2)
                 end
+                task.wait(0.5)
             end
         end)
+    else
+        rconsoleprint("Auto stopped\n")
     end
 end)
+
+-- Mở console nếu executor hỗ trợ
+if rconsolecreate then
+    rconsolecreate()
+    rconsoleprint("UGC Auto Script loaded!\n")
+end

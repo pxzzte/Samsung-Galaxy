@@ -28,13 +28,8 @@ local positions = {
     CFrame.new(106.348709, 104.733131, 432.794159, 1, 0, 0, 0, 1, 0, 0, 0, 1)
 }
 
--- sample args (sửa tuỳ ý cho từng part)
-local argsList = {
-    {"uuid-1", "GalaxyStars", "uuid-2"},
-    {"uuid-3", "GalaxyStars", "uuid-4"},
-    {"uuid-5", "GalaxyStars", "uuid-6"},
-    {"uuid-7", "GalaxyStars", "uuid-8"},
-}
+-- lưu args nhập từ textbox
+local argsList = {{},{},{},{}}
 
 -- UI
 local Window = Library:NewWindow("UGC Auto")
@@ -49,11 +44,25 @@ Tab:CreateButton("Go To Lobby", function()
     pcall(function() remote:InvokeServer() end)
 end)
 
--- Part buttons
+-- Part buttons + textbox
 for i=1,4 do
+    -- textbox để nhập args (dạng: uuid1,GalaxyStars,uuid2)
+    Tab:CreateTextbox("Args for Part "..i, function(txt)
+        local t = {}
+        for v in string.gmatch(txt, "([^,]+)") do
+            table.insert(t, v)
+        end
+        argsList[i] = t
+    end)
+
+    -- button dịch chuyển + invoke
     Tab:CreateButton("Go Part "..i, function()
         tp(positions[i])
         task.wait(0.3)
-        collect(argsList[i])
+        if #argsList[i] > 0 then
+            collect(argsList[i])
+        else
+            warn("Chưa nhập args cho Part "..i)
+        end
     end)
 end

@@ -17,56 +17,60 @@ local function tp(part)
     end
 end
 
--- lưu input
-local funcs = {"","","",""}
-local parts = {1,1,1,1}
-
 -- UI
-local Window = Library:NewWindow("UGC Auto Runner")
-local Tab = Window:NewSection("Sequence")
+local Window = Library:NewWindow("UGC Runner")
+local Tab = Window:NewSection("Actions")
 
-for i=1,4 do
-    Tab:CreateTextbox("Function "..i, function(txt)
-        funcs[i] = txt
+-- Nút GoToLobby
+Tab:CreateButton("Go To Lobby", function()
+    local remote = game:GetService("ReplicatedStorage")
+        :WaitForChild("Packages"):WaitForChild("Knit")
+        :WaitForChild("Services"):WaitForChild("GameService")
+        :WaitForChild("RF"):WaitForChild("GoToLobby")
+
+    pcall(function()
+        remote:InvokeServer()
     end)
-    Tab:CreateTextbox("Part Index "..i, function(txt)
-        parts[i] = tonumber(txt) or 1
-    end)
-    Tab:CreateButton("Test Invoke "..i, function()
-        local part = getPart(parts[i])
-        tp(part)
-        task.wait(0.3)
-        local remote = game.ReplicatedStorage:FindFirstChild(funcs[i], true)
-        if remote and remote:IsA("RemoteFunction") then
+end)
+
+-- Nút cho Part 1
+Tab:CreateButton("Part 1", function()
+    local part = getPart(5) -- theo yêu cầu: part1 = [5]
+    tp(part)
+    local remote = game.ReplicatedStorage:FindFirstChild("YourRemoteHere", true)
+    if remote then
+        if remote:IsA("RemoteFunction") then
             pcall(function() remote:InvokeServer() end)
-        elseif remote and remote:IsA("RemoteEvent") then
+        elseif remote:IsA("RemoteEvent") then
             pcall(function() remote:FireServer() end)
-        else
-            warn("Không tìm thấy Remote: "..funcs[i])
         end
-    end)
-end
+    end
+end)
 
--- Toggle chạy loop
-local looping = false
-Tab:CreateToggle("Run Sequence Loop", function(state)
-    looping = state
-    if looping then
-        task.spawn(function()
-            while looping do
-                for i=1,4 do
-                    local part = getPart(parts[i])
-                    tp(part)
-                    task.wait(0.3)
-                    local remote = game.ReplicatedStorage:FindFirstChild(funcs[i], true)
-                    if remote and remote:IsA("RemoteFunction") then
-                        pcall(function() remote:InvokeServer() end)
-                    elseif remote and remote:IsA("RemoteEvent") then
-                        pcall(function() remote:FireServer() end)
-                    end
-                    task.wait(0.5)
-                end
-            end
-        end)
+-- Nút cho Part 2
+Tab:CreateButton("Part 2", function()
+    local part = getPart(4) -- part2 = [4]
+    tp(part)
+    local remote = game.ReplicatedStorage:FindFirstChild("YourRemoteHere", true)
+    if remote then
+        if remote:IsA("RemoteFunction") then
+            pcall(function() remote:InvokeServer() end)
+        elseif remote:IsA("RemoteEvent") then
+            pcall(function() remote:FireServer() end)
+        end
+    end
+end)
+
+-- Nút cho Part 3
+Tab:CreateButton("Part 3", function()
+    local part = getPart(2) -- part3 = [2]
+    tp(part)
+    local remote = game.ReplicatedStorage:FindFirstChild("YourRemoteHere", true)
+    if remote then
+        if remote:IsA("RemoteFunction") then
+            pcall(function() remote:InvokeServer() end)
+        elseif remote:IsA("RemoteEvent") then
+            pcall(function() remote:FireServer() end)
+        end
     end
 end)

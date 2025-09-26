@@ -6,6 +6,11 @@ local lp = game.Players.LocalPlayer
 local function tp(cf)
     if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
         lp.Character.HumanoidRootPart.CFrame = cf
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Teleport",
+            Text = "Dịch chuyển đến part!",
+            Duration = 2
+        })
     end
 end
 
@@ -17,6 +22,11 @@ local function collect(args)
         :WaitForChild("RF"):WaitForChild("Collect")
     pcall(function()
         remote:InvokeServer(unpack(args))
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Collect",
+            Text = "Đã invoke Collect!",
+            Duration = 2
+        })
     end)
 end
 
@@ -28,8 +38,13 @@ local positions = {
     CFrame.new(106.348709, 104.733131, 432.794159, 1, 0, 0, 0, 1, 0, 0, 0, 1)
 }
 
--- lưu args nhập từ textbox
-local argsList = {{},{},{},{}}
+-- sample args (sửa tuỳ ý cho từng part)
+local argsList = {
+    {"uuid-1", "GalaxyStars", "uuid-2"},
+    {"uuid-3", "GalaxyStars", "uuid-4"},
+    {"uuid-5", "GalaxyStars", "uuid-6"},
+    {"uuid-7", "GalaxyStars", "uuid-8"},
+}
 
 -- UI
 local Window = Library:NewWindow("UGC Auto")
@@ -41,28 +56,39 @@ Tab:CreateButton("Go To Lobby", function()
         :WaitForChild("Packages"):WaitForChild("Knit")
         :WaitForChild("Services"):WaitForChild("GameService")
         :WaitForChild("RF"):WaitForChild("GoToLobby")
-    pcall(function() remote:InvokeServer() end)
+    pcall(function() 
+        remote:InvokeServer()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Lobby",
+            Text = "Đã về Lobby!",
+            Duration = 2
+        })
+    end)
 end)
 
--- Part buttons + textbox
+-- Part buttons
 for i=1,4 do
-    -- textbox để nhập args (dạng: uuid1,GalaxyStars,uuid2)
-    Tab:CreateTextbox("Args for Part "..i, function(txt)
-        local t = {}
-        for v in string.gmatch(txt, "([^,]+)") do
-            table.insert(t, v)
-        end
-        argsList[i] = t
-    end)
-
-    -- button dịch chuyển + invoke
     Tab:CreateButton("Go Part "..i, function()
         tp(positions[i])
         task.wait(0.3)
-        if #argsList[i] > 0 then
-            collect(argsList[i])
-        else
-            warn("Chưa nhập args cho Part "..i)
-        end
+        collect(argsList[i])
     end)
 end
+
+-- Auto toggle
+local looping = false
+Tab:CreateToggle("Auto Run Parts", function(state)
+    looping = state
+    if looping then
+        task.spawn(function()
+            while looping do
+                for i=1,4 do
+                    tp(positions[i])
+                    task.wait(0.3)
+                    collect(argsList[i])
+                    task.wait(1) -- delay giữa các part
+                end
+            end
+        end)
+    end
+end)

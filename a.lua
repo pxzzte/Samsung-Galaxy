@@ -91,5 +91,4 @@ Tab:CreateToggle("Auto Run", function(state)
         end)
     end
 end)
-
 showNoti("Script", "Da tai script!")

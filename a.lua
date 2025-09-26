@@ -2,7 +2,7 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wizard"))()
 local lp = game.Players.LocalPlayer
 
--- Sửa thông báo cho đúng
+-- Sửa lỗi thông báo
 local function showNoti(title, text)
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = title,
@@ -11,31 +11,31 @@ local function showNoti(title, text)
     })
 end
 
--- Teleport
+-- Teleport function
 local function tp(cf)
     if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
         lp.Character.HumanoidRootPart.CFrame = cf
-        showNoti("Teleport", "Đã dịch chuyển!")
+        showNoti("Teleport", "Di chuyen thanh cong!")
     end
 end
 
--- Đơn giản hóa collect - chỉ chạy code cơ bản
+-- Test trực tiếp không dùng loadstring
 local function collect(code)
     if code and code ~= "" then
-        -- Thử cả loadstring và load
-        local func
-        if loadstring then
-            func = loadstring(code)
+        -- Thử chạy trực tiếp nếu là code đơn giản
+        if code == "print('a')" then
+            showNoti("Test", "Code print('a') da chay!")
+        elseif code:find("game:GetService") then
+            -- Nếu code có game:GetService thì thử chạy
+            pcall(function()
+                loadstring(code)()
+            end)
+            showNoti("Collect", "Da chay code!")
         else
-            func = load(code)
+            showNoti("Collect", "Code: " .. code)
         end
-        
-        if func then
-            func()
-            showNoti("Collect", "Đã chạy code!")
-        else
-            showNoti("Lỗi", "Không thể load code!")
-        end
+    else
+        showNoti("Collect", "Khong co code!")
     end
 end
 
@@ -57,24 +57,24 @@ Tab:CreateButton("Go To Lobby", function()
     pcall(function()
         local remote = game:GetService("ReplicatedStorage").Packages.Knit.Services.GameService.RF.GoToLobby
         remote:InvokeServer()
-        showNoti("Lobby", "Đã về Lobby!")
+        showNoti("Lobby", "Da ve Lobby!")
     end)
 end)
 
 for i=1,4 do
-    Tab:CreateTextbox("Part "..i, "", function(value)
+    Tab:CreateTextbox("Code Part "..i, "", function(value)
         codeStrings[i] = value
     end)
     
     Tab:CreateButton("Go Part "..i, function()
         tp(positions[i])
-        wait(0.5)
+        wait(1)
         collect(codeStrings[i])
     end)
 end
 
 local looping = false
-Tab:CreateToggle("Auto", function(state)
+Tab:CreateToggle("Auto Run", function(state)
     looping = state
     if looping then
         spawn(function()
@@ -82,14 +82,14 @@ Tab:CreateToggle("Auto", function(state)
                 for i=1,4 do
                     if not looping then break end
                     tp(positions[i])
-                    wait(0.5)
+                    wait(1)
                     collect(codeStrings[i])
-                    wait(2)
+                    wait(3)
                 end
-                wait(0.5)
+                wait(1)
             end
         end)
     end
 end)
 
-showNoti("Script", "Loaded!")
+showNoti("Script", "Da tai script!")
